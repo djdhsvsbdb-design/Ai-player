@@ -22,6 +22,8 @@ int main() {
     trainFromFile(model, path.string());
     assert(model.examples.size() == 4);
     assert(model.clearExamples == 4);
+    assert(model.actionCounts[static_cast<std::size_t>(Mechanic::Wave)][0] == 3);
+    assert(model.actionCounts[static_cast<std::size_t>(Mechanic::Ship)][1] == 1);
     LiveObservation observation;
     observation.mechanic = Mechanic::Wave;
     observation.verticalVelocity = 0.5;
