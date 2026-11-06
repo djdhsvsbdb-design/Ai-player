@@ -15,6 +15,7 @@ int main() {
     runtime::load(path);
     assert(runtime::g_globalSkill.mechanics.size() == 8);
     runtime::beginLevel(12345);
+    runtime::setLiveObservationEnabled(true);
     LiveObservation cube;
     cube.tick = 1;
     cube.mechanic = Mechanic::Cube;
@@ -48,6 +49,7 @@ int main() {
     runtime::g_globalSkill = GlobalSkillMemory{};
     runtime::g_levels.clear();
     runtime::g_liveObservations.clear();
+    runtime::g_liveObservationEnabled = false;
     runtime::g_currentLevelKey.clear();
     runtime::g_memoryPath.clear();
     runtime::g_loaded = false;
