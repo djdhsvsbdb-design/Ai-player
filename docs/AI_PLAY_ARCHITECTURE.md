@@ -197,3 +197,12 @@ A first platform-independent policy core is now present in `src/mod/ai_play/brai
 The policy returns a target button state only when it has at least three same-mechanic neighbors, the closest example is within a conservative distance threshold, and the weighted vote is sufficiently consistent. Otherwise it returns `Abstain`. Clear-run examples receive more weight than death-run examples. The model is rebuilt after each attempt, so newly saved demonstrations can affect the next attempt without restarting the game.
 
 This is the first actual inference component, not yet an autonomous player. The game hook does not yet call this policy to issue inputs; there is no restart controller, pause/death release guard, or Android-validated control loop. A sparse demonstration file will correctly produce abstentions rather than a claim of Extreme Demon capability.
+
+
+## Offline controller — Phase C1 (guarded)
+
+Added `src/mod/ai_play/controller.hpp` and a controller test. The policy is entirely local: no API key, network request, remote model, or paid inference service. It only arms a mechanic after at least 24 demonstrations for that mechanic, including at least 8 press and 8 release labels. The game hook asks the model for a button-state decision and sends only normal player-1 press/release edges through the existing game input handler. It never changes physics, collision, player position, or hitboxes.
+
+Safety gates exclude solver sessions, test/replay layers, and takeover sessions. A model abstention, death, untrained mechanic, or unsafe session releases any AI-held button. Leaving the level also attempts a final release. Control is therefore automatic only after enough human demonstrations exist for the active mechanic; a fresh install will not pretend to know how to beat an unfamiliar level.
+
+**Not completed / not claimed:** a dedicated autonomous restart manager is not added. The controller does not yet generate new training examples from its own actions or update weights from self-play outcomes. It cannot promise Extreme Demon clears. Android runtime and the Geode hook have not been built or device-tested; treat this as experimental code until that validation is done.
