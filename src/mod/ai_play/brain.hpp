@@ -7,6 +7,7 @@
 #include "mod/ai_play/learning.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -71,6 +72,8 @@ inline bool parseTrainingFile(const std::string& path, Model& model) {
     std::string line;
     std::getline(in, line); // consume header newline
     Model parsed;
+    constexpr std::size_t kMaxModelExamples = 2048;
+    std::size_t replacementCursor = 0;
     while (std::getline(in, line)) {
         if (line.empty()) continue;
         std::istringstream row(line);
@@ -103,7 +106,13 @@ inline bool parseTrainingFile(const std::string& path, Model& model) {
         // A clear is stronger evidence, while actions from a failed run still
         // describe the trajectory before the failure and remain useful at lower weight.
         e.weight = completed ? 1.0 : 0.55 + 0.25 * clamp01(progress);
-        parsed.examples.push_back(e);
+        if (parsed.examples.size() < kMaxModelExamples) {
+            parsed.examples.push_back(e);
+        } else {
+            // Keep a bounded rolling sample so later demonstrations are not ignored.
+            parsed.examples[replacementCursor] = e;
+            replacementCursor = (replacementCursor + 1) % kMaxModelExamples;
+        }
         if (completed) ++parsed.clearExamples;
         else ++parsed.deathExamples;
     }
@@ -136,29 +145,39 @@ inline Prediction predict(const Model& model, const LiveObservation& observation
         return result;
 
     const auto query = describe(observation);
-    struct Neighbor { double distance; double weight; bool held; };
-    std::vector<Neighbor> nearest;
-    nearest.reserve(model.examples.size());
+    struct Neighbor { double distance = 0.0; double weight = 0.0; bool held = false; };
+    // Fixed-size top-k buffer: no per-frame heap allocation and no full sort.
+    constexpr std::size_t k = 5;
+    std::array<Neighbor, k> nearest{};
+    std::size_t count = 0;
     for (const auto& example : model.examples) {
         if (example.mechanic != query.mechanic) continue;
         const double distance = featureDistance(query, example);
-        if (std::isfinite(distance)) nearest.push_back({distance, example.weight, example.targetHeld});
+        if (!std::isfinite(distance)) continue;
+        if (count < k) {
+            nearest[count++] = {distance, example.weight, example.targetHeld};
+            continue;
+        }
+        std::size_t worst = 0;
+        for (std::size_t i = 1; i < k; ++i)
+            if (nearest[i].distance > nearest[worst].distance) worst = i;
+        if (distance < nearest[worst].distance)
+            nearest[worst] = {distance, example.weight, example.targetHeld};
     }
-    if (nearest.size() < 3) return result;
-    constexpr std::size_t k = 5;
-    const auto count = std::min(k, nearest.size());
-    std::partial_sort(nearest.begin(), nearest.begin() + count, nearest.end(),
-        [](const Neighbor& a, const Neighbor& b) { return a.distance < b.distance; });
+    if (count < 3) return result;
+
     double press = 0.0, release = 0.0, total = 0.0;
+    double bestDistance = nearest[0].distance;
     for (std::size_t i = 0; i < count; ++i) {
         const auto& n = nearest[i];
+        bestDistance = std::min(bestDistance, n.distance);
         const double w = n.weight / (0.04 + n.distance * n.distance);
         (n.held ? press : release) += w;
         total += w;
     }
     if (total <= 0.0) return result;
     result.neighbors = count;
-    result.distance = nearest[0].distance;
+    result.distance = bestDistance;
     result.confidence = std::max(press, release) / total;
     // Conservative abstention: do not act on distant or conflicting demonstrations.
     if (result.distance > 1.35 || result.confidence < 0.72) return result;
