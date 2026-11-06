@@ -213,3 +213,20 @@ Safety gates exclude solver sessions, test/replay layers, and takeover sessions.
 AI button edges are recorded into a bounded, separate in-memory rollout buffer. The buffer is not mixed with human demonstrations. When Geometry Dash confirms a genuine level clear, that successful AI trajectory is appended as positive demonstration data and the local nearest-neighbor model is rebuilt. When the AI dies, its trajectory is discarded; the model is not taught that the failed actions were correct. This avoids the most direct form of self-labeling feedback.
 
 This is outcome-gated imitation, not a complete reinforcement-learning algorithm: it does not estimate counterfactual action values, assign delayed credit to every action, or autonomously restart after death. A successful trajectory is only positive evidence for the sequence as a whole. Autonomous retry remains disabled until a supported Android 2.2081 restart path and pause/quit/attempt-limit behavior can be validated. No Android build or device test is claimed.
+
+
+## Offline policy evaluation — Phase C3
+
+Added a platform-independent evaluator in `src/mod/ai_play/evaluation.hpp`. It creates a
+reproducible holdout split, trains only on the retained partition, and measures the policy
+on excluded demonstrations. The report separates coverage, accuracy when the policy acts,
+end-to-end accuracy, abstentions, false presses, and false releases, both overall and per
+mechanic. CSV output makes the report easy to inspect outside the game.
+
+The evaluator is explicitly offline: its repeated nearest-neighbor scans are not part of
+the gameplay loop and must not be called from a frame/update hook. A deterministic
+row-modulo split is useful as a regression smoke test, but it is not proof of transfer to
+unseen levels; a proper validation set must be collected from different levels or separate
+play sessions. High accuracy with very low coverage must not be presented as a capable
+player. A synthetic test checks split accounting, metric bounds, CSV shape, and the
+empty-model abstention case. No Android runtime or performance claim is implied.
