@@ -1122,7 +1122,9 @@ class $modify(PlayLayer) {
             solver::g_deathBooked = true;
             auto pos = (isP1 || !m_player1) ? player->getPosition()
                                             : m_player1->getPosition();
-            if (!g_started && !m_isTestMode && isP1)
+            if (aiplay::runtime::g_aiWasDriving)
+                aiplay::runtime::finishAIAttempt(false);
+            else if (!g_started && !m_isTestMode && isP1)
                 aiplay::runtime::recordHumanAttempt(getCurrentPercent() / 100.0, false);
             if (isP2Dual) {
                 static int s_p2logs = 0;
@@ -1315,7 +1317,9 @@ class $modify(PlayLayer) {
             NoRecordGuard nr(this);
             PlayLayer::levelComplete();
         }
-        if (!g_started && !m_isTestMode)
+        if (aiplay::runtime::g_aiWasDriving)
+            aiplay::runtime::finishAIAttempt(true);
+        else if (!g_started && !m_isTestMode)
             aiplay::runtime::recordHumanAttempt(1.0, true);
         restoreProgress();
         if (g_started) {
