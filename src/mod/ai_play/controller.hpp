@@ -16,14 +16,13 @@ struct Command {
 };
 
 inline bool readyFor(const brain::Model& model, Mechanic mechanic) {
-    std::size_t press = 0, release = 0;
-    for (const auto& example : model.examples) {
-        if (example.mechanic != mechanic) continue;
-        if (example.targetHeld) ++press;
-        else ++release;
-    }
+    if (!isPlayableMechanic(mechanic)) return false;
+    const auto index = static_cast<std::size_t>(mechanic);
+    const auto releases = model.actionCounts[index][0];
+    const auto presses = model.actionCounts[index][1];
     // Avoid treating a tiny or one-sided sample as a trained policy.
-    return press >= 8 && release >= 8 && press + release >= 24;
+    return presses >= 8 && releases >= 8 && presses + releases >= 24;
+
 }
 
 inline Command decide(const brain::Model& model,
