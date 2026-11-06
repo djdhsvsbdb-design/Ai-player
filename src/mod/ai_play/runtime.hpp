@@ -150,13 +150,13 @@ inline void recordLiveObservation(const LiveObservation& observation) {
     g_liveObservations.push_back(observation);
 }
 
-inline void recordHumanAction(std::uint64_t tick, Mechanic mechanic, bool down) {
+inline void recordHumanAction(const HumanActionSample& action) {
     if (!g_loaded || !g_liveObservationEnabled || g_currentLevelKey.empty() ||
-        !isPlayableMechanic(mechanic)) return;
+        !isPlayableMechanic(action.mechanic)) return;
     constexpr std::size_t kMaxHumanActions = 8192;
     if (g_humanActions.size() >= kMaxHumanActions)
         g_humanActions.erase(g_humanActions.begin());
-    g_humanActions.push_back(HumanActionSample{tick, mechanic, down});
+    g_humanActions.push_back(action);
 }
 
 inline void recordHumanAttempt(double progress, bool completed) {
