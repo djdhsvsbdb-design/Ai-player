@@ -5,6 +5,27 @@
 int main() {
     using namespace aiplay;
 
+    GlobalSkillMemory starter;
+    applyStartingProfile(starter, StartingProfile::FirstInsaneDemon);
+    assert(starter.mechanics.size() == 8);
+    const auto& starterWave = starter.mechanics.at(Mechanic::Wave);
+    assert(starterWave.overall.value == 0.60);
+    assert(starterWave.overall.verifiedSamples == 0);
+    assert(starterWave.overall.confidence == 0.0);
+    // The preset is only a prior; real verified observations can improve or recalibrate it.
+    VerifiedEvidence starterEvidence;
+    starterEvidence.mechanic = Mechanic::Wave;
+    starterEvidence.verified = true;
+    starterEvidence.synchronized = true;
+    starterEvidence.predictionError = 0.20;
+    starterEvidence.timingError = 0.20;
+    starterEvidence.controlError = 0.25;
+    starterEvidence.recognitionError = 0.20;
+    starterEvidence.adaptationError = 0.35;
+    starterEvidence.consistencyError = 0.25;
+    assert(applyVerifiedEvidence(starter, starterEvidence));
+    assert(starter.mechanics.at(Mechanic::Wave).overall.verifiedSamples == 1);
+
     GlobalSkillMemory global;
     VerifiedEvidence noisy;
     noisy.mechanic = Mechanic::Wave;
