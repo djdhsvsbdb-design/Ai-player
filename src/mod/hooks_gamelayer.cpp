@@ -8215,6 +8215,37 @@ class $modify(GJBaseGameLayer) {
         // (or, between frames, the next one), which is the step an injection of the same press
         // is fed at.
         if (!g_injecting && takeover::personDriving()) takeover::noteInput(down, button, isPlayer1);
+        // Capture AI-generated edges separately. They are promoted only after
+        // Geometry Dash confirms a genuine clear; failed rollouts are discarded.
+        if (g_injecting && aiplay::runtime::g_aiWasDriving &&
+            button == 1 && isPlayer1 && m_player1 &&
+            aiplay::runtime::g_liveObservationEnabled && !m_player1->m_isDead) {
+            const auto mechanic = aiplay::classifyMechanic(
+                m_player1->m_isShip, m_player1->m_isBall, m_player1->m_isBird,
+                m_player1->m_isDart, m_player1->m_isRobot, m_player1->m_isSpider,
+                m_player1->m_isSwing);
+            aiplay::HumanActionSample action;
+            action.tick = static_cast<std::uint64_t>(g_tick);
+            action.mechanic = mechanic;
+            action.x = m_player1->getPositionX();
+            action.y = m_player1->getPositionY();
+            action.verticalVelocity = m_player1->m_yVelocity;
+            action.vehicleSize = m_player1->m_vehicleSize;
+            action.upsideDown = m_player1->m_isUpsideDown;
+            action.buttonHeldBefore = m_player1->m_holdingButtons[1];
+            action.down = down;
+            if (!aiplay::runtime::g_liveObservations.empty()) {
+                const auto& sensor = aiplay::runtime::g_liveObservations.back();
+                if (sensor.mechanic == mechanic && action.tick >= sensor.tick &&
+                    action.tick - sensor.tick <= 24) {
+                    action.nearestHazardGap = sensor.nearestHazardGap;
+                    action.nearestHazardVerticalOffset = sensor.nearestHazardVerticalOffset;
+                    action.nearestHazardType = sensor.nearestHazardType;
+                    action.nearbyHazardCount = sensor.nearbyHazardCount;
+                }
+            }
+            aiplay::runtime::recordAIAction(action);
+        }
         // Capture ordinary player-1 press/release edges as demonstrations. These
         // samples are kept separate from solver injections and are not yet training
         // evidence until a policy can pair them with verified outcomes.
