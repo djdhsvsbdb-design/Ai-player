@@ -50,6 +50,12 @@ inline constexpr Mechanic classifyMechanic(bool ship, bool ball, bool ufo,
     return Mechanic::Cube;
 }
 
+struct HumanActionSample {
+    std::uint64_t tick = 0;
+    Mechanic mechanic = Mechanic::Unknown;
+    bool down = false;
+};
+
 struct LiveObservation {
     std::uint64_t tick = 0;
     Mechanic mechanic = Mechanic::Unknown;
