@@ -18,6 +18,15 @@ int main() {
         assert(estimate.confidence == 0.0);
     }
     assert(!isPlayableMechanic(Mechanic::Unknown));
+    assert(classifyMechanic(false, false, false, false, false, false, false) == Mechanic::Cube);
+    assert(classifyMechanic(true, false, false, false, false, false, false) == Mechanic::Ship);
+    assert(classifyMechanic(false, true, false, false, false, false, false) == Mechanic::Ball);
+    assert(classifyMechanic(false, false, true, false, false, false, false) == Mechanic::Ufo);
+    assert(classifyMechanic(false, false, false, true, false, false, false) == Mechanic::Wave);
+    assert(classifyMechanic(false, false, false, false, true, false, false) == Mechanic::Robot);
+    assert(classifyMechanic(false, false, false, false, false, true, false) == Mechanic::Spider);
+    assert(classifyMechanic(false, false, false, false, false, false, true) == Mechanic::Swing);
+    assert(classifyMechanic(true, true, false, false, false, false, false) == Mechanic::Unknown);
     const auto& starterWave = starter.mechanics.at(Mechanic::Wave);
     assert(starterWave.overall.value == 0.60);
     assert(starterWave.overall.verifiedSamples == 0);
