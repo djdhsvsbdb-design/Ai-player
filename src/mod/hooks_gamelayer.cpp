@@ -6874,6 +6874,59 @@ class $modify(GJBaseGameLayer) {
                     aiplay::runtime::recordLiveObservation(observation);
                 }
             }
+
+            // Offline AI PLAY control: infer from the current player state plus the
+            // latest hazard scan. Only a sufficiently populated, balanced local model
+            // can drive. All inputs are ordinary press/release edges through GD.
+            if (livePlay && static_cast<GJBaseGameLayer*>(livePlay) == this
+                && !livePlay->m_isTestMode && !takeover::personDriving()) {
+                aiplay::LiveObservation current;
+                current.tick = static_cast<std::uint64_t>(g_tick);
+                current.mechanic = aiplay::classifyMechanic(
+                    m_player1->m_isShip, m_player1->m_isBall, m_player1->m_isBird,
+                    m_player1->m_isDart, m_player1->m_isRobot, m_player1->m_isSpider,
+                    m_player1->m_isSwing);
+                current.x = m_player1->getPositionX();
+                current.y = m_player1->getPositionY();
+                current.verticalVelocity = m_player1->m_yVelocity;
+                current.vehicleSize = m_player1->m_vehicleSize;
+                current.upsideDown = m_player1->m_isUpsideDown;
+                current.buttonHeld = m_player1->m_holdingButtons[1];
+                current.dead = m_player1->m_isDead;
+                current.synchronized = true;
+                if (!aiplay::runtime::g_liveObservations.empty()) {
+                    const auto& sensor = aiplay::runtime::g_liveObservations.back();
+                    if (sensor.mechanic == current.mechanic
+                        && current.tick >= sensor.tick && current.tick - sensor.tick <= 48) {
+                        current.nearestHazardGap = sensor.nearestHazardGap;
+                        current.nearestHazardVerticalOffset = sensor.nearestHazardVerticalOffset;
+                        current.nearestHazardType = sensor.nearestHazardType;
+                        current.nearbyHazardCount = sensor.nearbyHazardCount;
+                    }
+                }
+                const bool safe = !g_started && !g_sessionOver
+                    && aiplay::runtime::g_liveObservationEnabled
+                    && !m_player1->m_isDead && !livePlay->m_isTestMode;
+                const auto command = aiplay::controller::decide(
+                    aiplay::runtime::g_brainModel, current,
+                    aiplay::runtime::g_aiButtonHeld, safe);
+                aiplay::runtime::g_aiWasDriving =
+                    aiplay::controller::readyFor(aiplay::runtime::g_brainModel, current.mechanic)
+                    && safe;
+                if (command.valid) {
+                    g_injecting = true;
+                    this->handleButton(command.down, 1 /*jump*/, true /*player 1*/);
+                    g_injecting = false;
+                    aiplay::runtime::g_aiButtonHeld = command.down;
+                    if (command.down) orbtrace::g_lastPress = g_tick;
+                }
+            } else if (aiplay::runtime::g_aiButtonHeld) {
+                g_injecting = true;
+                this->handleButton(false, 1 /*jump*/, true /*player 1*/);
+                g_injecting = false;
+                aiplay::runtime::g_aiButtonHeld = false;
+                aiplay::runtime::g_aiWasDriving = false;
+            }
         }
         // cfg `robodbg=t0,t1`: one line per substep in a tick range, printed by
         // BOTH the plain replay and the section search because both come
