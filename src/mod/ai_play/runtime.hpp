@@ -19,6 +19,9 @@ inline std::unordered_map<std::string, LevelExperienceMemory> g_levels;
 inline std::string g_currentLevelKey;
 inline bool g_loaded = false;
 inline std::filesystem::path g_memoryPath;
+// Bounded, in-session state samples from the live game adapter. These are telemetry,
+// not verified learning evidence, and are deliberately not promoted into global skill.
+inline std::vector<LiveObservation> g_liveObservations;
 
 inline void save() {
     if (!g_loaded || g_memoryPath.empty()) return;
@@ -108,8 +111,27 @@ inline void load(const std::filesystem::path& path) {
 
 inline void beginLevel(int levelId) {
     g_currentLevelKey = std::to_string(levelId);
+    g_liveObservations.clear();
     auto& level = g_levels[g_currentLevelKey];
     level.levelKey = g_currentLevelKey;
+}
+
+inline void recordLiveObservation(const LiveObservation& observation) {
+    if (!g_loaded || g_currentLevelKey.empty() || !observation.synchronized ||
+        observation.dead || !isPlayableMechanic(observation.mechanic)) return;
+
+    // The adapter samples at 10 Hz, plus immediately on mode transitions. Keep
+    // the buffer bounded so long mobile sessions cannot grow memory indefinitely.
+    if (!g_liveObservations.empty()) {
+        const auto& last = g_liveObservations.back();
+        if (last.mechanic == observation.mechanic &&
+            observation.tick >= last.tick && observation.tick - last.tick < 24)
+            return;
+    }
+    constexpr std::size_t kMaxLiveObservations = 4096;
+    if (g_liveObservations.size() >= kMaxLiveObservations)
+        g_liveObservations.erase(g_liveObservations.begin());
+    g_liveObservations.push_back(observation);
 }
 
 inline void recordHumanAttempt(double progress, bool completed) {
