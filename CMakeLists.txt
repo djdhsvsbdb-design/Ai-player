@@ -46,11 +46,15 @@ add_executable(panelgeomtest EXCLUDE_FROM_ALL tools/panel_geom_test.cpp)
 add_executable(planroundtrip EXCLUDE_FROM_ALL tools/plan_roundtrip_test.cpp)
 # The platform-independent AI PLAY learning model (no Geode or GD required).
 add_executable(aiplaylearningtest EXCLUDE_FROM_ALL tools/ai_play_learning_test.cpp)
+# AI PLAY runtime persistence round-trip (standard C++ only).
+add_executable(aiplayruntimetest EXCLUDE_FROM_ALL tools/ai_play_runtime_test.cpp)
 target_include_directories(panelgeomtest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(panelgeomtest PRIVATE cxx_std_17)
 target_include_directories(planroundtrip PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(aiplaylearningtest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(aiplayruntimetest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(planroundtrip PRIVATE cxx_std_17)
+target_compile_features(aiplayruntimetest PRIVATE cxx_std_17)
 
 if (GDSOLVER_BUILD_MOD)
     file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
