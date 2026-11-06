@@ -206,3 +206,10 @@ Added `src/mod/ai_play/controller.hpp` and a controller test. The policy is enti
 Safety gates exclude solver sessions, test/replay layers, and takeover sessions. A model abstention, death, untrained mechanic, or unsafe session releases any AI-held button. Leaving the level also attempts a final release. Control is therefore automatic only after enough human demonstrations exist for the active mechanic; a fresh install will not pretend to know how to beat an unfamiliar level.
 
 **Not completed / not claimed:** a dedicated autonomous restart manager is not added. The controller does not yet generate new training examples from its own actions or update weights from self-play outcomes. It cannot promise Extreme Demon clears. Android runtime and the Geode hook have not been built or device-tested; treat this as experimental code until that validation is done.
+
+
+## Outcome-gated AI rollouts — Phase C2 (experimental)
+
+AI button edges are recorded into a bounded, separate in-memory rollout buffer. The buffer is not mixed with human demonstrations. When Geometry Dash confirms a genuine level clear, that successful AI trajectory is appended as positive demonstration data and the local nearest-neighbor model is rebuilt. When the AI dies, its trajectory is discarded; the model is not taught that the failed actions were correct. This avoids the most direct form of self-labeling feedback.
+
+This is outcome-gated imitation, not a complete reinforcement-learning algorithm: it does not estimate counterfactual action values, assign delayed credit to every action, or autonomously restart after death. A successful trajectory is only positive evidence for the sequence as a whole. Autonomous retry remains disabled until a supported Android 2.2081 restart path and pause/quit/attempt-limit behavior can be validated. No Android build or device test is claimed.
