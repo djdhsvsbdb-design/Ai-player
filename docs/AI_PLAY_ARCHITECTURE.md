@@ -246,3 +246,20 @@ agreement is not a level-completion rate. Storage is fixed-size and performs no 
 heap allocation. The controller test was also corrected to populate the cached per-mechanic
 action counts used by the readiness gate; the earlier fixture appended examples directly
 without updating that cache, so it did not represent a model loaded by the real parser.
+
+
+## AI progress score — Phase C5
+
+Added a separate lightweight score board in `src/mod/ai_play/score.hpp`. While the AI
+controller is armed, every newly reached whole percentage point in Geometry Dash's own
+level progress awards **+1 point**. Repeated observations of the same percentage award
+nothing extra. A genuine AI death applies **−10 points once**; the score is floored at
+zero. A clear awards any remaining progress through 100%. The total score is persisted
+in the existing versioned AI PLAY memory file and is independent of mechanic skill.
+
+The score is a progress/stability indicator only. It is not fed into the policy, does not
+change its decisions, and does not claim that the AI has learned a mechanic. Scoring starts
+only after the policy is ready and actually armed for an ordinary live level; solver,
+replay, and test sessions are excluded. The score core has a standalone unit test and the
+runtime persistence test checks that the total survives reload. Android build/device
+validation remains outstanding.
