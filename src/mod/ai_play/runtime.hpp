@@ -209,6 +209,8 @@ inline void recordAIAction(const HumanActionSample& action) {
     g_aiActions.push_back(action);
 }
 
+inline bool hasAIAttempt() { return g_aiWasDriving || !g_aiActions.empty(); }
+
 inline void finishAIAttempt(bool completed) {
     if (!g_aiWasDriving && g_aiActions.empty()) return;
     ++g_aiAttempts;
