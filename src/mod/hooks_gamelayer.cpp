@@ -1,5 +1,6 @@
 // GJBaseGameLayer hook: tick control, fast loop, replay/serve, section solver, tracing.
 #include "mod/playlayer_helpers.hpp"
+#include "mod/ai_play/runtime.hpp"
 #include "mod/profsample.hpp"
 #include "mod/replaystep.hpp"
 #include <Geode/modify/GameObject.hpp>   // cfg objwatch: ActWatchObject
@@ -6816,6 +6817,30 @@ class $modify(GJBaseGameLayer) {
         // whatever the freeze does, processCommands does not see it, no ticks
         // are spent on it, and the two-tick gap has another cause.
         ++g_tick;
+        // AI PLAY's first live adapter is read-only: observe every standard mode
+        // during ordinary human play, never during solver/replay/search sessions.
+        // Samples are bounded and are not treated as verified skill evidence.
+        if (!g_started && !secsolve::g_active && m_player1) {
+            auto* livePlay = PlayLayer::get();
+            if (livePlay && static_cast<GJBaseGameLayer*>(livePlay) == this
+                && !livePlay->m_isTestMode && !m_player1->m_isDead) {
+                aiplay::LiveObservation observation;
+                observation.tick = static_cast<std::uint64_t>(g_tick);
+                observation.mechanic = aiplay::classifyMechanic(
+                    m_player1->m_isShip, m_player1->m_isBall, m_player1->m_isBird,
+                    m_player1->m_isDart, m_player1->m_isRobot, m_player1->m_isSpider,
+                    m_player1->m_isSwing);
+                observation.x = m_player1->getPositionX();
+                observation.y = m_player1->getPositionY();
+                observation.verticalVelocity = m_player1->m_yVelocity;
+                observation.vehicleSize = m_player1->m_vehicleSize;
+                observation.upsideDown = m_player1->m_isUpsideDown;
+                observation.buttonHeld = m_player1->m_holdingButtons[1];
+                observation.dead = m_player1->m_isDead;
+                observation.synchronized = true;
+                aiplay::runtime::recordLiveObservation(observation);
+            }
+        }
         // cfg `robodbg=t0,t1`: one line per substep in a tick range, printed by
         // BOTH the plain replay and the section search because both come
         // through here. The robot's charge accumulator is the named suspect for
