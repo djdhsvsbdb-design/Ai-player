@@ -2,6 +2,8 @@
 
 #include <cassert>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 
 int main() {
     using namespace aiplay;
