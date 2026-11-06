@@ -30,6 +30,9 @@ inline std::vector<HumanActionSample> g_humanActions;
 inline brain::Model g_brainModel;
 inline bool g_aiButtonHeld = false;
 inline bool g_aiWasDriving = false;
+inline std::vector<HumanActionSample> g_aiActions;
+inline std::uint64_t g_aiAttempts = 0;
+inline std::uint64_t g_aiClears = 0;
 
 inline void save() {
     if (!g_loaded || g_memoryPath.empty()) return;
@@ -194,6 +197,37 @@ inline void persistDemonstrations(double progress, bool completed) {
             << (a.buttonHeldBefore ? 1 : 0) << ' ' << (a.down ? 1 : 0) << '\n';
     }
     out.flush();
+}
+
+// AI-generated trajectories stay separate from human demonstrations. Failed
+// rollouts are discarded rather than being trained as if their actions were correct.
+inline void recordAIAction(const HumanActionSample& action) {
+    if (!g_loaded || !g_liveObservationEnabled || !g_aiWasDriving ||
+        !isPlayableMechanic(action.mechanic)) return;
+    constexpr std::size_t kMaxAIActions = 8192;
+    if (g_aiActions.size() >= kMaxAIActions) g_aiActions.erase(g_aiActions.begin());
+    g_aiActions.push_back(action);
+}
+
+inline void finishAIAttempt(bool completed) {
+    if (!g_aiWasDriving && g_aiActions.empty()) return;
+    ++g_aiAttempts;
+    if (completed && !g_aiActions.empty()) {
+        // Only a genuine in-game clear promotes an AI trajectory. Death trajectories
+        // are not self-labelled, which avoids reinforcing the policy's own mistakes.
+        auto previous = std::move(g_humanActions);
+        g_humanActions = std::move(g_aiActions);
+        g_aiActions.clear();
+        persistDemonstrations(1.0, true);
+        g_humanActions = std::move(previous);
+        ++g_aiClears;
+        const auto trainingPath = g_memoryPath.parent_path() / "ai_play_training_v1.dat";
+        brain::trainFromFile(g_brainModel, trainingPath.string());
+    } else {
+        g_aiActions.clear();
+    }
+    g_aiWasDriving = false;
+    g_aiButtonHeld = false;
 }
 
 inline brain::Prediction predict(const LiveObservation& observation) {
