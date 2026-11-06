@@ -263,3 +263,19 @@ only after the policy is ready and actually armed for an ordinary live level; so
 replay, and test sessions are excluded. The score core has a standalone unit test and the
 runtime persistence test checks that the total survives reload. Android build/device
 validation remains outstanding.
+
+
+## Live policy integration test and normal game audio — Phase C6
+
+Added `tools/ai_play_live_policy_test.cpp`, a synthetic end-to-end test of the existing
+observation → trained model → controller command path. It creates balanced examples for
+all eight mechanics, reloads them through the real dataset parser, verifies per-mechanic
+readiness, and checks that the controller emits both a press and a release for matching
+states. This test validates the platform-independent policy path; it does not prove that
+the policy can clear a real level.
+
+The ordinary AI PLAY control path continues to send button edges through Geometry Dash's
+normal `handleButton` method. It does not invoke the solver's seek-muting helpers, so
+normal gameplay audio is left under the game's own audio settings. No extra synthetic
+"click" sound is added. Audio behavior and real-device input timing still need Android
+verification.
