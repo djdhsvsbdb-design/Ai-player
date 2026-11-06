@@ -51,13 +51,16 @@ int main() {
     {
         std::ofstream out(largePath, std::ios::trunc);
         out << "AIPLAY_DEMOS 1\n";
+        // The first 52 press rows are evicted; the retained 2048 rows release.
         for (int i = 0; i < 2100; ++i)
             out << "A 77 1 1.0 " << (300 + i) << " 4 "
-                << "10 20 0.5 1 24 0 8 1 0 1 0\n";
+                << "10 20 0.5 1 24 0 8 1 0 1 " << (i < 52 ? 1 : 0) << "\n";
     }
     Model bounded;
     trainFromFile(bounded, largePath.string());
     assert(bounded.examples.size() == 2048);
+    assert(bounded.actionCounts[static_cast<std::size_t>(Mechanic::Wave)][1] == 0);
+    assert(bounded.actionCounts[static_cast<std::size_t>(Mechanic::Wave)][0] == 2048);
     std::error_code ec;
     std::filesystem::remove(largePath, ec);
     std::filesystem::remove(path, ec);
