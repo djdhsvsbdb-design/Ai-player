@@ -1122,7 +1122,7 @@ class $modify(PlayLayer) {
             solver::g_deathBooked = true;
             auto pos = (isP1 || !m_player1) ? player->getPosition()
                                             : m_player1->getPosition();
-            if (aiplay::runtime::g_aiWasDriving)
+            if (aiplay::runtime::hasAIAttempt())
                 aiplay::runtime::finishAIAttempt(false);
             else if (!g_started && !m_isTestMode && isP1)
                 aiplay::runtime::recordHumanAttempt(getCurrentPercent() / 100.0, false);
@@ -1317,7 +1317,7 @@ class $modify(PlayLayer) {
             NoRecordGuard nr(this);
             PlayLayer::levelComplete();
         }
-        if (aiplay::runtime::g_aiWasDriving)
+        if (aiplay::runtime::hasAIAttempt())
             aiplay::runtime::finishAIAttempt(true);
         else if (!g_started && !m_isTestMode)
             aiplay::runtime::recordHumanAttempt(1.0, true);
