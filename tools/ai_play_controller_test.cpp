@@ -8,24 +8,18 @@ int main() {
     using namespace aiplay::controller;
 
     Model model;
-    for (int i = 0; i < 12; ++i) {
+    for (int i = 0; i < 24; ++i) {
         TrainingExample e;
         e.mechanic = Mechanic::Wave;
-        e.targetHeld = i < 6;
+        e.targetHeld = i < 12;
         e.verticalVelocity = 1.0;
         e.hazardGap = 20.0;
         model.examples.push_back(e);
-    }
-    assert(!readyFor(model, Mechanic::Wave));
-    for (int i = 0; i < 12; ++i) {
-        TrainingExample e;
-        e.mechanic = Mechanic::Wave;
-        e.targetHeld = i < 6;
-        e.verticalVelocity = 1.0;
-        e.hazardGap = 20.0;
-        model.examples.push_back(e);
+        ++model.actionCounts[static_cast<std::size_t>(Mechanic::Wave)]
+                            [e.targetHeld ? 1u : 0u];
     }
     assert(readyFor(model, Mechanic::Wave));
+    assert(!readyFor(model, Mechanic::Ship));
 
     LiveObservation observation;
     observation.mechanic = Mechanic::Wave;
@@ -33,16 +27,34 @@ int main() {
     observation.vehicleSize = 1.0;
     observation.nearestHazardGap = 20.0;
     observation.synchronized = true;
-    auto cmd = decide(model, observation, true, false);
-    assert(cmd.valid && !cmd.down); // unsafe session always releases
+
+    auto result = decideDetailed(model, observation, true, false);
+    assert(result.command.valid && !result.command.down);
+    assert(result.reason == Reason::UnsafeSession);
+
     observation.dead = true;
-    cmd = decide(model, observation, true, true);
-    assert(cmd.valid && !cmd.down); // death always releases
+    result = decideDetailed(model, observation, true, true);
+    assert(result.command.valid && !result.command.down);
+    assert(result.reason == Reason::PlayerDead);
+
     observation.dead = false;
     observation.mechanic = Mechanic::Ship;
-    cmd = decide(model, observation, true, true);
-    assert(cmd.valid && !cmd.down); // untrained mechanic releases
-    cmd = decide(model, observation, false, true);
-    assert(!cmd.valid); // no spurious input
+    result = decideDetailed(model, observation, true, true);
+    assert(result.command.valid && !result.command.down);
+    assert(result.reason == Reason::InsufficientTraining);
+    result = decideDetailed(model, observation, false, true);
+    assert(!result.command.valid);
+
+    observation.mechanic = Mechanic::Wave;
+    observation.synchronized = false;
+    result = decideDetailed(model, observation, false, true);
+    assert(!result.command.valid);
+    assert(result.reason == Reason::UnsynchronizedObservation);
+
+    // The compatibility API preserves the original simple command contract.
+    observation.synchronized = true;
+    observation.dead = true;
+    const auto command = decide(model, observation, true, true);
+    assert(command.valid && !command.down);
     return 0;
 }
