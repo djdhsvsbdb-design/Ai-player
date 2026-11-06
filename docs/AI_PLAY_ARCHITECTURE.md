@@ -150,8 +150,11 @@ The first Android milestone is a reliable observation/input loop, not an ambitio
 ### Phase A — Learning data model
 Define versioned global and per-level records, mechanic identifiers, attempt summaries, and unit tests for persistence and updates.
 
-### Phase B — Observation and action adapter
-Connect the policy to real in-game state and ordinary press/release input on Android 2.2081. Add safeguards for pause, death, restart, and loss of synchronization.
+### Phase B1 — Persistent starter memory and human-play telemetry
+Implemented a versioned local memory file for the First Insane Demon starting prior and per-level attempt/best-progress records. Ordinary human deaths and clears are recorded; solver/replay-driven sessions and start-position test runs are excluded. This is progress telemetry only: it does not infer mechanic mastery from a percentage.
+
+### Phase B2 — Observation and action adapter
+Still required: connect the policy to real in-game state and ordinary press/release input on Android 2.2081. Add safeguards for pause, death, restart, and loss of synchronization.
 
 ### Phase C — First transferable mechanic
 Implement one mechanic end-to-end (initially Cube or Wave): observe, predict, act, verify, update, persist, and reuse the learned model in a different level.
@@ -177,4 +180,4 @@ AI PLAY's first meaningful learning release is acceptable only when:
 
 ## 11. Current implementation status
 
-This file is an architectural baseline only. The existing repository is a solver-first codebase. The starting-skill prior and platform-independent learning records are implemented as a standalone model. The Player Policy, persistent memory stores, live learning updates, AI PLAY button, sound profiles, and Android validation still need implementation.
+This file is an architectural baseline only. The existing repository is a solver-first codebase. The starting-skill prior, platform-independent learning model, local persistence, and basic human-play attempt/progress telemetry are implemented. The Player Policy, mechanic-specific live observation and verified learning, AI PLAY button, sound profiles, and Android validation still need implementation.
