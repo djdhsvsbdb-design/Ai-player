@@ -19,6 +19,7 @@ int main() {
     assert(board.recordDeath() == 5);
     assert(board.points == 0);
     assert(board.recordDeath() == 0);
+    assert(!board.attemptActive);
     assert(board.observeProgress(80.0) == 0);
 
     // A later attempt can earn points again; a clear awards the remaining progress.
