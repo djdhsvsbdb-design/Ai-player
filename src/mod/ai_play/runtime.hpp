@@ -193,6 +193,10 @@ inline void persistDemonstrations(double progress, bool completed) {
     out.flush();
 }
 
+inline brain::Prediction predict(const LiveObservation& observation) {
+    return brain::predict(g_brainModel, observation);
+}
+
 inline void recordHumanAttempt(double progress, bool completed) {
     if (!g_loaded || !g_liveObservationEnabled || g_currentLevelKey.empty()) return;
     auto found = g_levels.find(g_currentLevelKey);
@@ -208,6 +212,10 @@ inline void recordHumanAttempt(double progress, bool completed) {
     observation.verified = true;
     recordLevelObservation(level, observation);
     persistDemonstrations(progress, completed);
+    // Rebuild the compact policy after every attempt so new demonstrations can
+    // influence the next run without requiring a mod/game restart.
+    const auto trainingPath = g_memoryPath.parent_path() / "ai_play_training_v1.dat";
+    brain::trainFromFile(g_brainModel, trainingPath.string());
     g_humanActions.clear();
     g_liveObservations.clear();
     save();
