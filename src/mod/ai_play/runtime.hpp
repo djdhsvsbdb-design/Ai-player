@@ -2,7 +2,8 @@
 
 // AI PLAY Phase B1: persistent starter profile and verified human-play progress.
 // This runtime deliberately does not infer mechanic skill from a level percentage.
-// Mechanic-specific learning waits for a trustworthy live observation adapter.
+// The read-only observation adapter is telemetry; policy-grade verified evidence is
+// still required before any mechanic skill can change.
 
 #include "mod/ai_play/learning.hpp"
 
