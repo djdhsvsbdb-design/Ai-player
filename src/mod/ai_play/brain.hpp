@@ -105,7 +105,6 @@ inline bool parseTrainingFile(const std::string& path, Model& model) {
         e.upsideDown = upsideDown != 0;
         e.buttonHeldBefore = heldBefore != 0;
         e.targetHeld = down != 0;
-        ++parsed.actionCounts[static_cast<std::size_t>(e.mechanic)][e.targetHeld ? 1 : 0];
         // A clear is stronger evidence, while actions from a failed run still
         // describe the trajectory before the failure and remain useful at lower weight.
         e.weight = completed ? 1.0 : 0.55 + 0.25 * clamp01(progress);
@@ -118,6 +117,12 @@ inline bool parseTrainingFile(const std::string& path, Model& model) {
         }
         if (completed) ++parsed.clearExamples;
         else ++parsed.deathExamples;
+    }
+    // Readiness must describe the bounded examples actually used by inference,
+    // not older rows that were evicted from the rolling model window.
+    for (const auto& example : parsed.examples) {
+        ++parsed.actionCounts[static_cast<std::size_t>(example.mechanic)]
+                             [example.targetHeld ? 1 : 0];
     }
     model = std::move(parsed);
     return true;
