@@ -769,6 +769,14 @@ class $modify(PlayLayer) {
                     + std::to_string(g_unfocusPauseBlocked) + ")");
             return;
         }
+        // Release AI control before the manual pause freezes the game loop.
+        if (!unfocused && aiplay::runtime::g_aiButtonHeld) {
+            g_injecting = true;
+            this->handleButton(false, 1 /*jump*/, true /*player 1*/);
+            g_injecting = false;
+            aiplay::runtime::g_aiButtonHeld = false;
+            aiplay::runtime::g_aiWasDriving = false;
+        }
         PlayLayer::pauseGame(unfocused);
     }
 
