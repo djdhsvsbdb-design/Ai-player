@@ -7,6 +7,7 @@
 
 #include "mod/ai_play/learning.hpp"
 #include "mod/ai_play/brain.hpp"
+#include "mod/ai_play/controller.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -27,6 +28,8 @@ inline std::filesystem::path g_memoryPath;
 inline std::vector<LiveObservation> g_liveObservations;
 inline std::vector<HumanActionSample> g_humanActions;
 inline brain::Model g_brainModel;
+inline bool g_aiButtonHeld = false;
+inline bool g_aiWasDriving = false;
 
 inline void save() {
     if (!g_loaded || g_memoryPath.empty()) return;
