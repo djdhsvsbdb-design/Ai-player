@@ -6831,15 +6831,48 @@ class $modify(GJBaseGameLayer) {
                     m_player1->m_isShip, m_player1->m_isBall, m_player1->m_isBird,
                     m_player1->m_isDart, m_player1->m_isRobot, m_player1->m_isSpider,
                     m_player1->m_isSwing);
-                observation.x = m_player1->getPositionX();
-                observation.y = m_player1->getPositionY();
-                observation.verticalVelocity = m_player1->m_yVelocity;
-                observation.vehicleSize = m_player1->m_vehicleSize;
-                observation.upsideDown = m_player1->m_isUpsideDown;
-                observation.buttonHeld = m_player1->m_holdingButtons[1];
-                observation.dead = m_player1->m_isDead;
-                observation.synchronized = true;
-                aiplay::runtime::recordLiveObservation(observation);
+                if (aiplay::runtime::shouldSampleLiveObservation(
+                        observation.tick, observation.mechanic)) {
+                    observation.x = m_player1->getPositionX();
+                    observation.y = m_player1->getPositionY();
+                    observation.verticalVelocity = m_player1->m_yVelocity;
+                    observation.vehicleSize = m_player1->m_vehicleSize;
+                    observation.upsideDown = m_player1->m_isUpsideDown;
+                    observation.buttonHeld = m_player1->m_holdingButtons[1];
+                    observation.dead = m_player1->m_isDead;
+                    observation.synchronized = true;
+
+                    // Ask GD for nearby damaging objects instead of guessing from
+                    // object IDs or static level coordinates. This is sampled at
+                    // 10 Hz and remains read-only.
+                    const CCRect playerRect = m_player1->getObjectRect();
+                    CCRect ahead = playerRect;
+                    ahead.origin.x += playerRect.size.width;
+                    ahead.origin.y -= 120.f;
+                    ahead.size.width = 240.f;
+                    ahead.size.height += 240.f;
+                    if (CCArray* hazards = this->damagingObjectsInRect(ahead, true)) {
+                        observation.nearbyHazardCount =
+                            static_cast<std::uint32_t>(hazards->count());
+                        double nearestGap = 100000.0;
+                        for (auto* object : CCArrayExt<GameObject*>(hazards)) {
+                            if (!object) continue;
+                            const CCRect hazardRect = object->getObjectRect();
+                            const double gap = std::max(0.0,
+                                static_cast<double>(hazardRect.origin.x -
+                                    (playerRect.origin.x + playerRect.size.width)));
+                            if (gap < nearestGap) {
+                                nearestGap = gap;
+                                observation.nearestHazardGap = gap;
+                                observation.nearestHazardVerticalOffset =
+                                    (hazardRect.origin.y + hazardRect.size.height * 0.5) -
+                                    (playerRect.origin.y + playerRect.size.height * 0.5);
+                                observation.nearestHazardType = object->m_objectType;
+                            }
+                        }
+                    }
+                    aiplay::runtime::recordLiveObservation(observation);
+                }
             }
         }
         // cfg `robodbg=t0,t1`: one line per substep in a tick range, printed by
