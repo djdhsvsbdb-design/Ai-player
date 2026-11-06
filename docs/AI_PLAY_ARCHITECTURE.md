@@ -153,8 +153,10 @@ Define versioned global and per-level records, mechanic identifiers, attempt sum
 ### Phase B1 — Persistent starter memory and human-play telemetry
 Implemented a versioned local memory file for the First Insane Demon starting prior and per-level attempt/best-progress records. Ordinary human deaths and clears are recorded; solver/replay-driven sessions and start-position test runs are excluded. This is progress telemetry only: it does not infer mechanic mastery from a percentage.
 
-### Phase B2 — Observation and action adapter
-Still required: connect the policy to real in-game state and ordinary press/release input on Android 2.2081. Add safeguards for pause, death, restart, and loss of synchronization.
+### Phase B2 — Shared all-mode observation adapter
+The first read-only adapter now samples the live player during ordinary human play for Cube, Ship, Ball, UFO, Wave, Robot, Spider, and Swing. It records tick, position, vertical velocity, vehicle size, gravity orientation, and held-button state in a bounded in-session buffer. Contradictory mode flags are classified as Unknown. Solver/replay sessions, test-mode layers, dead-player states, and unsynchronized observations are excluded. These samples are telemetry only and do not increase skill.
+
+Still required: Android 2.2081 validation, obstacle/context observations, and a policy-controlled press/release adapter with safeguards for pause, death, restart, and loss of synchronization.
 
 ### Phase C — All-mode observation and action adapter
 Implement one shared live adapter that identifies Cube, Ship, Ball, UFO, Wave, Robot, Spider, and Swing, captures the state needed by their models, and sends ordinary press/release input. Each mode gets its own timing/control model and validation cases; unknown or desynchronized states are never trained.
@@ -180,4 +182,4 @@ AI PLAY's first meaningful learning release is acceptable only when:
 
 ## 11. Current implementation status
 
-This file is an architectural baseline only. The existing repository is a solver-first codebase. The starting-skill prior, platform-independent learning model for all eight mode identifiers, local persistence, and basic human-play attempt/progress telemetry are implemented. The shared mode roster is covered by unit-test assertions; live per-mode observation, action, and verified learning are not yet implemented. The Player Policy, mechanic-specific live observation and verified learning, AI PLAY button, sound profiles, and Android validation still need implementation.
+This file is an architectural baseline only. The existing repository is a solver-first codebase. The starting-skill prior, platform-independent learning model for all eight mode identifiers, local persistence, basic human-play attempt/progress telemetry, strict all-mode classification, and a bounded read-only live player-state sampler are implemented. The sampler is not a playing policy and its telemetry does not update skill. Policy-controlled input, obstacle/context observations, verified mechanic learning, AI PLAY button, sound profiles, and Android validation remain outstanding. The Player Policy, mechanic-specific live observation and verified learning, AI PLAY button, sound profiles, and Android validation still need implementation.
