@@ -15,6 +15,25 @@ struct Command {
     bool down = false;
 };
 
+enum class Reason : std::uint8_t {
+    ActionIssued,
+    NoChangeNeeded,
+    UnsafeSession,
+    UnsynchronizedObservation,
+    PlayerDead,
+    UnsupportedMechanic,
+    InsufficientTraining,
+    ModelAbstained
+};
+
+struct DecisionResult {
+    Command command;
+    Reason reason = Reason::NoChangeNeeded;
+    double confidence = 0.0;
+    double nearestDistance = 0.0;
+    std::size_t neighbors = 0;
+};
+
 inline bool readyFor(const brain::Model& model, Mechanic mechanic) {
     if (!isPlayableMechanic(mechanic)) return false;
     const auto index = static_cast<std::size_t>(mechanic);
@@ -22,24 +41,52 @@ inline bool readyFor(const brain::Model& model, Mechanic mechanic) {
     const auto presses = model.actionCounts[index][1];
     // Avoid treating a tiny or one-sided sample as a trained policy.
     return presses >= 8 && releases >= 8 && presses + releases >= 24;
+}
 
+inline DecisionResult decideDetailed(const brain::Model& model,
+                                     const LiveObservation& observation,
+                                     bool currentlyHeld,
+                                     bool sessionSafe) {
+    auto blocked = [currentlyHeld](Reason reason) {
+        return DecisionResult{
+            currentlyHeld ? Command{true, false} : Command{}, reason, 0.0, 0.0, 0
+        };
+    };
+
+    if (!sessionSafe) return blocked(Reason::UnsafeSession);
+    if (!observation.synchronized)
+        return blocked(Reason::UnsynchronizedObservation);
+    if (observation.dead) return blocked(Reason::PlayerDead);
+    if (!isPlayableMechanic(observation.mechanic))
+        return blocked(Reason::UnsupportedMechanic);
+    if (!readyFor(model, observation.mechanic))
+        return blocked(Reason::InsufficientTraining);
+
+    const auto prediction = brain::predict(model, observation);
+    if (prediction.decision == brain::Decision::Abstain) {
+        auto result = blocked(Reason::ModelAbstained);
+        result.confidence = prediction.confidence;
+        result.nearestDistance = prediction.distance;
+        result.neighbors = prediction.neighbors;
+        return result;
+    }
+
+    const bool target = prediction.decision == brain::Decision::Press;
+    DecisionResult result;
+    result.reason = target == currentlyHeld
+        ? Reason::NoChangeNeeded : Reason::ActionIssued;
+    result.command = target == currentlyHeld ? Command{} : Command{true, target};
+    result.confidence = prediction.confidence;
+    result.nearestDistance = prediction.distance;
+    result.neighbors = prediction.neighbors;
+    return result;
 }
 
 inline Command decide(const brain::Model& model,
                       const LiveObservation& observation,
                       bool currentlyHeld,
                       bool sessionSafe) {
-    if (!sessionSafe || !observation.synchronized || observation.dead ||
-        !isPlayableMechanic(observation.mechanic) ||
-        !readyFor(model, observation.mechanic)) {
-        return currentlyHeld ? Command{true, false} : Command{};
-    }
-
-    const auto prediction = brain::predict(model, observation);
-    if (prediction.decision == brain::Decision::Abstain)
-        return currentlyHeld ? Command{true, false} : Command{};
-    const bool target = prediction.decision == brain::Decision::Press;
-    return target == currentlyHeld ? Command{} : Command{true, target};
+    return decideDetailed(model, observation, currentlyHeld, sessionSafe).command;
 }
 
 } // namespace aiplay::controller
