@@ -6820,7 +6820,8 @@ class $modify(GJBaseGameLayer) {
         // AI PLAY's first live adapter is read-only: observe every standard mode
         // during ordinary human play, never during solver/replay/search sessions.
         // Samples are bounded and are not treated as verified skill evidence.
-        if (!g_started && !secsolve::g_active && m_player1) {
+        if (!g_started && !secsolve::g_active
+            && aiplay::runtime::g_liveObservationEnabled && m_player1) {
             auto* livePlay = PlayLayer::get();
             if (livePlay && static_cast<GJBaseGameLayer*>(livePlay) == this
                 && !livePlay->m_isTestMode && !m_player1->m_isDead) {
