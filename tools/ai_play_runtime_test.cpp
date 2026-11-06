@@ -44,7 +44,11 @@ int main() {
     rejected.mechanic = Mechanic::Ship;
     runtime::recordLiveObservation(rejected);
     assert(runtime::g_liveObservations.size() == 2);
-    runtime::recordHumanAction(30, Mechanic::Ship, true);
+    HumanActionSample blockedAction;
+    blockedAction.tick = 30;
+    blockedAction.mechanic = Mechanic::Ship;
+    blockedAction.down = true;
+    runtime::recordHumanAction(blockedAction);
     assert(runtime::g_humanActions.size() == 2);
     runtime::recordHumanAttempt(0.99, false); // replay/disabled sessions must not be counted
     assert(runtime::g_levels.at("12345").attempts == 0);
