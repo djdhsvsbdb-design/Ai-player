@@ -57,6 +57,10 @@ struct LiveObservation {
     double y = 0.0;
     double verticalVelocity = 0.0;
     double vehicleSize = 1.0;
+    double nearestHazardGap = 100000.0;
+    double nearestHazardVerticalOffset = 0.0;
+    std::int32_t nearestHazardType = -1;
+    std::uint32_t nearbyHazardCount = 0;
     bool upsideDown = false;
     bool buttonHeld = false;
     bool dead = false;
