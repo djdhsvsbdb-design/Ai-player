@@ -7,7 +7,17 @@ int main() {
 
     GlobalSkillMemory starter;
     applyStartingProfile(starter, StartingProfile::FirstInsaneDemon);
-    assert(starter.mechanics.size() == 8);
+    assert(starter.mechanics.size() == kPlayableMechanics.size());
+    // All eight modes have independent starting estimates and can be updated
+    // without changing the skill record of another mode.
+    for (const auto mechanic : kPlayableMechanics) {
+        assert(isPlayableMechanic(mechanic));
+        assert(starter.mechanics.find(mechanic) != starter.mechanics.end());
+        const auto& estimate = starter.mechanics.at(mechanic).overall;
+        assert(estimate.verifiedSamples == 0);
+        assert(estimate.confidence == 0.0);
+    }
+    assert(!isPlayableMechanic(Mechanic::Unknown));
     const auto& starterWave = starter.mechanics.at(Mechanic::Wave);
     assert(starterWave.overall.value == 0.60);
     assert(starterWave.overall.verifiedSamples == 0);
@@ -25,6 +35,10 @@ int main() {
     starterEvidence.consistencyError = 0.25;
     assert(applyVerifiedEvidence(starter, starterEvidence));
     assert(starter.mechanics.at(Mechanic::Wave).overall.verifiedSamples == 1);
+    for (const auto mechanic : kPlayableMechanics) {
+        if (mechanic == Mechanic::Wave) continue;
+        assert(starter.mechanics.at(mechanic).overall.verifiedSamples == 0);
+    }
 
     GlobalSkillMemory global;
     VerifiedEvidence noisy;
