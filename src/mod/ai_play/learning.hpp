@@ -30,6 +30,39 @@ inline constexpr bool isPlayableMechanic(Mechanic mechanic) {
     return false;
 }
 
+// Strict classification: contradictory mode flags are treated as Unknown rather
+// than silently training the wrong mechanic after a stale/partial game snapshot.
+inline constexpr Mechanic classifyMechanic(bool ship, bool ball, bool ufo,
+                                            bool wave, bool robot, bool spider,
+                                            bool swing) {
+    const unsigned active = static_cast<unsigned>(ship) + static_cast<unsigned>(ball)
+        + static_cast<unsigned>(ufo) + static_cast<unsigned>(wave)
+        + static_cast<unsigned>(robot) + static_cast<unsigned>(spider)
+        + static_cast<unsigned>(swing);
+    if (active > 1) return Mechanic::Unknown;
+    if (ship) return Mechanic::Ship;
+    if (ball) return Mechanic::Ball;
+    if (ufo) return Mechanic::Ufo;
+    if (wave) return Mechanic::Wave;
+    if (robot) return Mechanic::Robot;
+    if (spider) return Mechanic::Spider;
+    if (swing) return Mechanic::Swing;
+    return Mechanic::Cube;
+}
+
+struct LiveObservation {
+    std::uint64_t tick = 0;
+    Mechanic mechanic = Mechanic::Unknown;
+    double x = 0.0;
+    double y = 0.0;
+    double verticalVelocity = 0.0;
+    double vehicleSize = 1.0;
+    bool upsideDown = false;
+    bool buttonHeld = false;
+    bool dead = false;
+    bool synchronized = false;
+};
+
 enum class SkillDimension : std::uint8_t {
     Timing, Control, PatternRecognition, Adaptation, Consistency, Count
 };
