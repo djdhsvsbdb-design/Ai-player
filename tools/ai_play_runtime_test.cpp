@@ -41,6 +41,8 @@ int main() {
     rejected.mechanic = Mechanic::Ship;
     runtime::recordLiveObservation(rejected);
     assert(runtime::g_liveObservations.size() == 2);
+    runtime::recordHumanAttempt(0.99, false); // replay/disabled sessions must not be counted
+    assert(runtime::g_levels.at("12345").attempts == 0);
     runtime::setLiveObservationEnabled(true);
 
     runtime::recordHumanAttempt(0.42, false);
