@@ -230,3 +230,19 @@ unseen levels; a proper validation set must be collected from different levels o
 play sessions. High accuracy with very low coverage must not be presented as a capable
 player. A synthetic test checks split accounting, metric bounds, CSV shape, and the
 empty-model abstention case. No Android runtime or performance claim is implied.
+
+
+## Controller diagnostics — Phase C4
+
+Added a fixed-size, allocation-free diagnostics snapshot in `src/mod/ai_play/diagnostics.hpp`.
+It tracks decisions, issued press/release edges, no-change decisions, model abstentions,
+safety blocks, unsupported mechanics, confidence totals, and maximum observed neighbor
+distance per mechanic. A separate verified-prediction counter compares policy targets with
+independently observed reference actions; unverified or desynchronized labels are rejected.
+
+The counters are passive helpers and are not yet wired into the Android UI. They are meant
+to make future status screens honest: a high action count is not a clear, and prediction
+agreement is not a level-completion rate. Storage is fixed-size and performs no per-event
+heap allocation. The controller test was also corrected to populate the cached per-mechanic
+action counts used by the readiness gate; the earlier fixture appended examples directly
+without updating that cache, so it did not represent a model loaded by the real parser.
