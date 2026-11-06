@@ -183,3 +183,8 @@ AI PLAY's first meaningful learning release is acceptable only when:
 ## 11. Current implementation status
 
 The existing repository is a solver-first codebase. The starting-skill prior, platform-independent learning model for all eight mode identifiers, local persistence, basic human-play attempt/progress telemetry, strict all-mode classification, and a bounded read-only live player-state sampler are implemented. The sampler and human-input capture are not a playing policy and their telemetry does not update skill. Policy-controlled input, richer context modeling, verified mechanic learning, AI PLAY button, sound profiles, and Android validation remain outstanding.
+
+
+## Automatic human-play demonstration collection
+
+On entry to a normal, non-replay, non-test level, AI PLAY enables its read-only observation and player-1 action capture automatically. At each human death or clear, the attempt's action demonstrations are appended to `ai_play_training_v1.dat` in the Geode mod save directory. The file is capped at 16 MiB; when the cap is exceeded, a fresh dataset is started with the current attempt. This is persistent imitation-learning data collection, not yet an online-trained policy: global mechanic skill is not updated from raw demonstrations, and no autonomous inputs are generated.
