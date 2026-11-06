@@ -18,6 +18,7 @@ inline GlobalSkillMemory g_globalSkill;
 inline std::unordered_map<std::string, LevelExperienceMemory> g_levels;
 inline std::string g_currentLevelKey;
 inline bool g_loaded = false;
+inline bool g_liveObservationEnabled = false;
 inline std::filesystem::path g_memoryPath;
 // Bounded, in-session state samples from the live game adapter. These are telemetry,
 // not verified learning evidence, and are deliberately not promoted into global skill.
@@ -109,6 +110,10 @@ inline void load(const std::filesystem::path& path) {
     }
 }
 
+inline void setLiveObservationEnabled(bool enabled) {
+    g_liveObservationEnabled = enabled;
+}
+
 inline void beginLevel(int levelId) {
     g_currentLevelKey = std::to_string(levelId);
     g_liveObservations.clear();
@@ -117,7 +122,7 @@ inline void beginLevel(int levelId) {
 }
 
 inline void recordLiveObservation(const LiveObservation& observation) {
-    if (!g_loaded || g_currentLevelKey.empty() || !observation.synchronized ||
+    if (!g_loaded || !g_liveObservationEnabled || g_currentLevelKey.empty() || !observation.synchronized ||
         observation.dead || !isPlayableMechanic(observation.mechanic)) return;
 
     // The adapter samples at 10 Hz, plus immediately on mode transitions. Keep
