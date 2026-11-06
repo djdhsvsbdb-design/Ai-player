@@ -134,6 +134,12 @@ inline void setLiveObservationEnabled(bool enabled) {
 }
 
 inline void beginLevel(int levelId) {
+    // Leaving a level without a clear/death cancels its unfinished score attempt
+    // without awarding progress or applying a death penalty.
+    g_aiScore.cancelAttempt();
+    g_aiWasDriving = false;
+    g_aiButtonHeld = false;
+    g_aiActions.clear();
     g_currentLevelKey = std::to_string(levelId);
     g_liveObservations.clear();
     g_humanActions.clear();
