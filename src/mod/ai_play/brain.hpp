@@ -43,6 +43,8 @@ struct Prediction {
 
 struct Model {
     std::vector<TrainingExample> examples;
+    // Cached action balance per mechanic: [mechanic][release/press].
+    std::array<std::array<std::size_t, 2>, 8> actionCounts{};
     std::uint64_t clearExamples = 0;
     std::uint64_t deathExamples = 0;
 };
@@ -103,6 +105,7 @@ inline bool parseTrainingFile(const std::string& path, Model& model) {
         e.upsideDown = upsideDown != 0;
         e.buttonHeldBefore = heldBefore != 0;
         e.targetHeld = down != 0;
+        ++parsed.actionCounts[static_cast<std::size_t>(e.mechanic)][e.targetHeld ? 1 : 0];
         // A clear is stronger evidence, while actions from a failed run still
         // describe the trajectory before the failure and remain useful at lower weight.
         e.weight = completed ? 1.0 : 0.55 + 0.25 * clamp01(progress);
