@@ -36,6 +36,12 @@ int main() {
     rejected.mechanic = Mechanic::Unknown;
     runtime::recordLiveObservation(rejected);
     assert(runtime::g_liveObservations.size() == 2);
+    runtime::setLiveObservationEnabled(false);
+    rejected.tick = 30;
+    rejected.mechanic = Mechanic::Ship;
+    runtime::recordLiveObservation(rejected);
+    assert(runtime::g_liveObservations.size() == 2);
+    runtime::setLiveObservationEnabled(true);
 
     runtime::recordHumanAttempt(0.42, false);
     runtime::recordHumanAttempt(1.0, true);
