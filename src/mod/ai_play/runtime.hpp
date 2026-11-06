@@ -6,6 +6,7 @@
 // still required before any mechanic skill can change.
 
 #include "mod/ai_play/learning.hpp"
+#include "mod/ai_play/brain.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -25,6 +26,7 @@ inline std::filesystem::path g_memoryPath;
 // not verified learning evidence, and are deliberately not promoted into global skill.
 inline std::vector<LiveObservation> g_liveObservations;
 inline std::vector<HumanActionSample> g_humanActions;
+inline brain::Model g_brainModel;
 
 inline void save() {
     if (!g_loaded || g_memoryPath.empty()) return;
@@ -67,6 +69,8 @@ inline void load(const std::filesystem::path& path) {
     g_loaded = true;
     g_memoryPath = path;
     applyStartingProfile(g_globalSkill, StartingProfile::FirstInsaneDemon);
+    const auto trainingPath = g_memoryPath.parent_path() / "ai_play_training_v1.dat";
+    brain::trainFromFile(g_brainModel, trainingPath.string());
 
     std::ifstream in(g_memoryPath);
     std::string magic;
