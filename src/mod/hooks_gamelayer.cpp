@@ -8174,8 +8174,29 @@ class $modify(GJBaseGameLayer) {
                     m_player1->m_isShip, m_player1->m_isBall, m_player1->m_isBird,
                     m_player1->m_isDart, m_player1->m_isRobot, m_player1->m_isSpider,
                     m_player1->m_isSwing);
-                aiplay::runtime::recordHumanAction(
-                    static_cast<std::uint64_t>(g_tick), mechanic, down);
+                aiplay::HumanActionSample action;
+                action.tick = static_cast<std::uint64_t>(g_tick);
+                action.mechanic = mechanic;
+                action.x = m_player1->getPositionX();
+                action.y = m_player1->getPositionY();
+                action.verticalVelocity = m_player1->m_yVelocity;
+                action.vehicleSize = m_player1->m_vehicleSize;
+                action.upsideDown = m_player1->m_isUpsideDown;
+                action.buttonHeldBefore = m_player1->m_holdingButtons[1];
+                action.down = down;
+                // Attach the most recent nearby-hazard summary only when it is
+                // from the same mechanic and still within the sensor's 10 Hz window.
+                if (!aiplay::runtime::g_liveObservations.empty()) {
+                    const auto& sensor = aiplay::runtime::g_liveObservations.back();
+                    if (sensor.mechanic == mechanic && action.tick >= sensor.tick
+                        && action.tick - sensor.tick <= 24) {
+                        action.nearestHazardGap = sensor.nearestHazardGap;
+                        action.nearestHazardVerticalOffset = sensor.nearestHazardVerticalOffset;
+                        action.nearestHazardType = sensor.nearestHazardType;
+                        action.nearbyHazardCount = sensor.nearbyHazardCount;
+                    }
+                }
+                aiplay::runtime::recordHumanAction(action);
             }
         }
         // Remember the raw press for the slope trace. Jump only (button 1) and
