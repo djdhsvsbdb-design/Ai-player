@@ -54,12 +54,12 @@ int main() {
     assert(runtime::g_levels.at("12345").attempts == 0);
     runtime::setLiveObservationEnabled(true);
 
-    runtime::recordHumanAttempt(0.42, false);
+    HumanActionSample demo;\n    demo.tick = 42;\n    demo.mechanic = Mechanic::Wave;\n    demo.x = 123.5;\n    demo.y = 456.25;\n    demo.down = true;\n    runtime::recordHumanAction(demo);\n    runtime::recordHumanAttempt(0.42, false);
     runtime::recordHumanAttempt(1.0, true);
     const auto& before = runtime::g_levels.at("12345");
     assert(before.attempts == 2);
     assert(before.bestProgress == 1.0);
-    assert(before.observations.size() == 2);
+    assert(before.observations.size() == 2);\n    const auto trainingPath = path.parent_path() / "ai_play_training_v1.dat";\n    {\n        std::ifstream training(trainingPath);\n        std::string contents((std::istreambuf_iterator<char>(training)), {});\n        assert(contents.find("AIPLAY_DEMOS 1") != std::string::npos);\n        assert(contents.find("A 12345 0 0.42 42") != std::string::npos);\n    }
     assert(runtime::g_globalSkill.mechanics.at(Mechanic::Wave).overall.verifiedSamples == 0);
 
     // Simulate a fresh process and verify the profile and per-level experience survive.
