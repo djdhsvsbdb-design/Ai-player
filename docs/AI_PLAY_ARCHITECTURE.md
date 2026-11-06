@@ -143,7 +143,7 @@ Therefore:
 - validate every adapter behavior on the actual Android 2.2081 build;
 - do not mark a mechanic as learned from an unverified or desynchronized replay.
 
-The first Android milestone is a reliable observation/input loop, not an ambitious learning score.
+The first Android milestone is one reliable observation/input loop shared by all eight standard modes, not eight unrelated controllers or an ambitious learning score.
 
 ## 9. Delivery phases
 
@@ -156,11 +156,11 @@ Implemented a versioned local memory file for the First Insane Demon starting pr
 ### Phase B2 — Observation and action adapter
 Still required: connect the policy to real in-game state and ordinary press/release input on Android 2.2081. Add safeguards for pause, death, restart, and loss of synchronization.
 
-### Phase C — First transferable mechanic
-Implement one mechanic end-to-end (initially Cube or Wave): observe, predict, act, verify, update, persist, and reuse the learned model in a different level.
+### Phase C — All-mode observation and action adapter
+Implement one shared live adapter that identifies Cube, Ship, Ball, UFO, Wave, Robot, Spider, and Swing, captures the state needed by their models, and sends ordinary press/release input. Each mode gets its own timing/control model and validation cases; unknown or desynchronized states are never trained.
 
-### Phase D — Broader mechanic coverage
-Add the remaining mechanics incrementally, each with explicit validation cases and confidence thresholds.
+### Phase D — All-mode transferable learning
+Bring all eight mode models through the same observe → predict → act → verify → update → persist loop. Keep separate evidence and confidence per mechanic, while sharing reusable timing/pattern representations where the evidence supports transfer. Validate each mode on Android 2.2081; do not count solver output as learned policy skill.
 
 ### Phase E — AI PLAY interface
 Add the AI PLAY entry point, learning stage, per-mechanic skill view, level-specific progress, and the requested click-sound settings. UI must distinguish verified learning from unverified estimates.
@@ -169,7 +169,7 @@ Add the AI PLAY entry point, learning stage, per-mechanic skill view, level-spec
 
 AI PLAY's first meaningful learning release is acceptable only when:
 
-1. A skill learned on Level A is loaded and used on Level B.
+1. Each of the eight standard modes has an independent skill record, and a skill learned on Level A is loaded and used on Level B.
 2. The agent does not relearn a mastered basic mechanic from zero on the next level.
 3. A new pattern can still cause uncertainty and trigger adaptation.
 4. Skill changes are traceable to verified observations.
@@ -180,4 +180,4 @@ AI PLAY's first meaningful learning release is acceptable only when:
 
 ## 11. Current implementation status
 
-This file is an architectural baseline only. The existing repository is a solver-first codebase. The starting-skill prior, platform-independent learning model, local persistence, and basic human-play attempt/progress telemetry are implemented. The Player Policy, mechanic-specific live observation and verified learning, AI PLAY button, sound profiles, and Android validation still need implementation.
+This file is an architectural baseline only. The existing repository is a solver-first codebase. The starting-skill prior, platform-independent learning model for all eight mode identifiers, local persistence, and basic human-play attempt/progress telemetry are implemented. The shared mode roster is covered by unit-test assertions; live per-mode observation, action, and verified learning are not yet implemented. The Player Policy, mechanic-specific live observation and verified learning, AI PLAY button, sound profiles, and Android validation still need implementation.
