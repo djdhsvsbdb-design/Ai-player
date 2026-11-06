@@ -45,6 +45,7 @@ struct ScoreBoard {
     std::int64_t recordDeath() {
         if (!attemptActive || deathApplied) return 0;
         deathApplied = true;
+        attemptActive = false;
         const std::int64_t lost = std::min(points, kDeathPenalty);
         points -= lost;
         attemptActive = false;
