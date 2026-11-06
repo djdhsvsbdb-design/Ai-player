@@ -159,6 +159,36 @@ inline void recordHumanAction(const HumanActionSample& action) {
     g_humanActions.push_back(action);
 }
 
+// Persist bounded human demonstrations automatically at each attempt boundary.
+// These are imitation-learning examples, not verified mechanic-skill updates.
+inline void persistDemonstrations(double progress, bool completed) {
+    if (g_memoryPath.empty() || g_humanActions.empty()) return;
+    const auto path = g_memoryPath.parent_path() / "ai_play_training_v1.dat";
+    constexpr std::uintmax_t kMaxTrainingBytes = 16u * 1024u * 1024u;
+    std::error_code ec;
+    auto size = std::filesystem::exists(path, ec) ? std::filesystem::file_size(path, ec) : 0u;
+    if (ec) return;
+    // Keep storage bounded. Once the cap is reached, start a fresh dataset with
+    // the current attempt rather than growing indefinitely on a mobile device.
+    const bool reset = size > kMaxTrainingBytes;
+    const bool needsHeader = reset || size == 0;
+    std::ofstream out(path, std::ios::out | (needsHeader ? std::ios::trunc : std::ios::app));
+    if (!out) return;
+    if (needsHeader) out << "AIPLAY_DEMOS 1\\n";
+    out << std::setprecision(9);
+    for (const auto& a : g_humanActions) {
+        out << "A " << g_currentLevelKey << ' ' << (completed ? 1 : 0) << ' '
+            << clamp01(progress) << ' ' << a.tick << ' '
+            << static_cast<unsigned>(a.mechanic) << ' '
+            << a.x << ' ' << a.y << ' ' << a.verticalVelocity << ' '
+            << a.vehicleSize << ' ' << a.nearestHazardGap << ' '
+            << a.nearestHazardVerticalOffset << ' ' << a.nearestHazardType << ' '
+            << a.nearbyHazardCount << ' ' << (a.upsideDown ? 1 : 0) << ' '
+            << (a.buttonHeldBefore ? 1 : 0) << ' ' << (a.down ? 1 : 0) << '\\n';
+    }
+    out.flush();
+}
+
 inline void recordHumanAttempt(double progress, bool completed) {
     if (!g_loaded || !g_liveObservationEnabled || g_currentLevelKey.empty()) return;
     auto found = g_levels.find(g_currentLevelKey);
@@ -173,6 +203,7 @@ inline void recordHumanAttempt(double progress, bool completed) {
     observation.error = completed ? 0.0 : 1.0 - observation.progress;
     observation.verified = true;
     recordLevelObservation(level, observation);
+    persistDemonstrations(progress, completed);
     save();
 }
 
