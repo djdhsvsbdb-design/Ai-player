@@ -141,7 +141,7 @@ inline void recordLiveObservation(const LiveObservation& observation) {
 }
 
 inline void recordHumanAttempt(double progress, bool completed) {
-    if (!g_loaded || g_currentLevelKey.empty()) return;
+    if (!g_loaded || !g_liveObservationEnabled || g_currentLevelKey.empty()) return;
     auto found = g_levels.find(g_currentLevelKey);
     if (found == g_levels.end()) return;
 
