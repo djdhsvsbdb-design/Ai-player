@@ -11,6 +11,16 @@ using namespace p1;
 // never reach it (the goEdit hooks at the end of this file). `why` is the session end's reason,
 // `censusWhy` the memory census's label.
 static void leaveLevelCleanup(const char* why, const char* censusWhy) {
+    // Never leave an AI-held input latched across a pause, quit, or scene transition.
+    if (aiplay::runtime::g_aiButtonHeld) {
+        if (auto* active = PlayLayer::get()) {
+            g_injecting = true;
+            active->handleButton(false, 1 /*jump*/, true /*player 1*/);
+            g_injecting = false;
+        }
+        aiplay::runtime::g_aiButtonHeld = false;
+        aiplay::runtime::g_aiWasDriving = false;
+    }
     // Exiting from the pause menu = session aborted. endSession alone is not enough:
     // if bookkeeping leftovers remain, hooks that do not check !g_sessionOver keep
     // running during subsequent normal play and break behaviour. Full reset on exit
