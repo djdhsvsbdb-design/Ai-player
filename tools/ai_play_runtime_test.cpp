@@ -44,6 +44,8 @@ int main() {
     rejected.mechanic = Mechanic::Ship;
     runtime::recordLiveObservation(rejected);
     assert(runtime::g_liveObservations.size() == 2);
+    runtime::recordHumanAction(30, Mechanic::Ship, true);
+    assert(runtime::g_humanActions.size() == 2);
     runtime::recordHumanAttempt(0.99, false); // replay/disabled sessions must not be counted
     assert(runtime::g_levels.at("12345").attempts == 0);
     runtime::setLiveObservationEnabled(true);
@@ -60,6 +62,7 @@ int main() {
     runtime::g_globalSkill = GlobalSkillMemory{};
     runtime::g_levels.clear();
     runtime::g_liveObservations.clear();
+    runtime::g_humanActions.clear();
     runtime::g_liveObservationEnabled = false;
     runtime::g_currentLevelKey.clear();
     runtime::g_memoryPath.clear();
