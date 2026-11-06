@@ -188,3 +188,12 @@ The existing repository is a solver-first codebase. The starting-skill prior, pl
 ## Automatic human-play demonstration collection
 
 On entry to a normal, non-replay, non-test level, AI PLAY enables its read-only observation and player-1 action capture automatically. At each human death or clear, the attempt's action demonstrations are appended to `ai_play_training_v1.dat` in the Geode mod save directory. The file is capped at 16 MiB; when the cap is exceeded, a fresh dataset is started with the current attempt. This is persistent imitation-learning data collection, not yet an online-trained policy: global mechanic skill is not updated from raw demonstrations, and no autonomous inputs are generated.
+
+
+## Behavior-cloning brain — Phase C0
+
+A first platform-independent policy core is now present in `src/mod/ai_play/brain.hpp`. It reads the persisted `AIPLAY_DEMOS 1` action records and builds a compact nearest-neighbor behavior-cloning model. The state descriptor uses active mechanic, vertical velocity, vehicle size, nearest-hazard gap and vertical offset, nearby-hazard count, gravity orientation, and prior held-button state; raw level X/Y coordinates are intentionally excluded so examples can transfer between levels.
+
+The policy returns a target button state only when it has at least three same-mechanic neighbors, the closest example is within a conservative distance threshold, and the weighted vote is sufficiently consistent. Otherwise it returns `Abstain`. Clear-run examples receive more weight than death-run examples. The model is rebuilt after each attempt, so newly saved demonstrations can affect the next attempt without restarting the game.
+
+This is the first actual inference component, not yet an autonomous player. The game hook does not yet call this policy to issue inputs; there is no restart controller, pause/death release guard, or Android-validated control loop. A sparse demonstration file will correctly produce abstentions rather than a claim of Extreme Demon capability.
