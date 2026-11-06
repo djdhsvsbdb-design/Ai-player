@@ -44,6 +44,19 @@ int main() {
     observation.synchronized = true;
     observation.dead = true;
     assert(predict(model, observation).decision == Decision::Abstain);
+    // The inference model must stay bounded even when the persisted log is large.
+    const auto largePath = std::filesystem::temp_directory_path() / "aiplay_brain_large_test.dat";
+    {
+        std::ofstream out(largePath, std::ios::trunc);
+        out << "AIPLAY_DEMOS 1\\n";
+        for (int i = 0; i < 2100; ++i)
+            out << "A 77 1 1.0 " << (300 + i) << " 4 "
+                << "10 20 0.5 1 24 0 8 1 0 1 0\\n";
+    }
+    Model bounded;
+    trainFromFile(bounded, largePath.string());
+    assert(bounded.examples.size() == 2048);
+    std::filesystem::remove(largePath, ec);
     std::error_code ec;
     std::filesystem::remove(path, ec);
     return 0;
