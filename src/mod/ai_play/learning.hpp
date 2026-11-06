@@ -53,6 +53,16 @@ inline constexpr Mechanic classifyMechanic(bool ship, bool ball, bool ufo,
 struct HumanActionSample {
     std::uint64_t tick = 0;
     Mechanic mechanic = Mechanic::Unknown;
+    double x = 0.0;
+    double y = 0.0;
+    double verticalVelocity = 0.0;
+    double vehicleSize = 1.0;
+    double nearestHazardGap = 100000.0;
+    double nearestHazardVerticalOffset = 0.0;
+    std::int32_t nearestHazardType = -1;
+    std::uint32_t nearbyHazardCount = 0;
+    bool upsideDown = false;
+    bool buttonHeldBefore = false;
     bool down = false;
 };
 
