@@ -8,6 +8,7 @@
 #include "mod/ai_play/learning.hpp"
 #include "mod/ai_play/brain.hpp"
 #include "mod/ai_play/controller.hpp"
+#include "mod/ai_play/score.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -33,6 +34,7 @@ inline bool g_aiWasDriving = false;
 inline std::vector<HumanActionSample> g_aiActions;
 inline std::uint64_t g_aiAttempts = 0;
 inline std::uint64_t g_aiClears = 0;
+inline score::ScoreBoard g_aiScore;
 
 inline void save() {
     if (!g_loaded || g_memoryPath.empty()) return;
@@ -41,6 +43,7 @@ inline void save() {
         std::ofstream out(temp, std::ios::out | std::ios::trunc);
         if (!out) return;
         out << "AIPLAY_MEMORY " << kLearningSchemaVersion << '\n';
+        out << "P " << g_aiScore.points << '\n';
         out << std::setprecision(17);
         for (const auto& [mechanic, skill] : g_globalSkill.mechanics) {
             out << "S " << static_cast<unsigned>(mechanic);
@@ -109,6 +112,10 @@ inline void load(const std::filesystem::path& path) {
                 dimension.value = clamp01(dimension.value);
                 dimension.confidence = clamp01(dimension.confidence);
             }
+        } else if (kind == 'P') {
+            std::int64_t points = 0;
+            if (!(in >> points)) break;
+            g_aiScore.points = std::max<std::int64_t>(0, points);
         } else if (kind == 'L') {
             std::string key;
             LevelExperienceMemory level;
@@ -209,10 +216,22 @@ inline void recordAIAction(const HumanActionSample& action) {
     g_aiActions.push_back(action);
 }
 
-inline bool hasAIAttempt() { return g_aiWasDriving || !g_aiActions.empty(); }
+inline bool hasAIAttempt() {
+    return g_aiWasDriving || !g_aiActions.empty() || g_aiScore.attemptActive;
+}
+
+// Start scoring only after the policy is actually armed. Percent is Geometry Dash's
+// own level progress; duplicate frame observations never award duplicate points.
+inline void observeAIProgress(double percent) {
+    if (!g_aiWasDriving) return;
+    if (!g_aiScore.attemptActive) g_aiScore.beginAttempt();
+    g_aiScore.observeProgress(percent);
+}
 
 inline void finishAIAttempt(bool completed) {
-    if (!g_aiWasDriving && g_aiActions.empty()) return;
+    if (!g_aiWasDriving && g_aiActions.empty() && !g_aiScore.attemptActive) return;
+    if (completed) g_aiScore.finishClear();
+    else g_aiScore.recordDeath();
     ++g_aiAttempts;
     if (completed && !g_aiActions.empty()) {
         // Only a genuine in-game clear promotes an AI trajectory. Death trajectories
@@ -230,6 +249,7 @@ inline void finishAIAttempt(bool completed) {
     }
     g_aiWasDriving = false;
     g_aiButtonHeld = false;
+    save();
 }
 
 inline brain::Prediction predict(const LiveObservation& observation) {
