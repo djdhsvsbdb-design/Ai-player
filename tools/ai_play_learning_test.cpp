@@ -27,6 +27,15 @@ int main() {
     assert(classifyMechanic(false, false, false, false, false, true, false) == Mechanic::Spider);
     assert(classifyMechanic(false, false, false, false, false, false, true) == Mechanic::Swing);
     assert(classifyMechanic(true, true, false, false, false, false, false) == Mechanic::Unknown);
+    LiveObservation sensor;
+    sensor.nearestHazardGap = 42.0;
+    sensor.nearestHazardVerticalOffset = -12.0;
+    sensor.nearestHazardType = 8;
+    sensor.nearbyHazardCount = 3;
+    assert(sensor.nearestHazardGap == 42.0);
+    assert(sensor.nearestHazardVerticalOffset == -12.0);
+    assert(sensor.nearestHazardType == 8);
+    assert(sensor.nearbyHazardCount == 3);
     const auto& starterWave = starter.mechanics.at(Mechanic::Wave);
     assert(starterWave.overall.value == 0.60);
     assert(starterWave.overall.verifiedSamples == 0);
