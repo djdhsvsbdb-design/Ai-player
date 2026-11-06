@@ -162,6 +162,9 @@ class $modify(PlayLayer) {
 #endif
     }
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
+        // A scene may be a replay, editor test, or solver-driven copy. Disable
+        // observation by default and opt in only after a normal human-play init.
+        aiplay::runtime::setLiveObservationEnabled(false);
         dpsolve::g_phaseLabelsLive = false;   // until start() has reset this level's labels (phase.hpp)
         // A session is configured here for the level the play menu's Start was pressed for, in
         // the mode it chose. Level selection is the game's own UI as is (custom levels included).
@@ -245,10 +248,11 @@ class $modify(PlayLayer) {
         const bool ok = PlayLayer::init(level, useReplay, dontCreateObjects);
         // Human-play progress is the first live training signal. Solver/replay sessions are
         // excluded: their generated inputs must not be mistaken for learned player skill.
-        if (ok && !g_started && level && !m_isTestMode) {
+        if (ok && !g_started && !useReplay && level && !m_isTestMode) {
             auto memoryFile = Mod::get()->getSaveDir() / "ai_play_memory_v1.dat";
             aiplay::runtime::load(memoryFile);
             aiplay::runtime::beginLevel(level->m_levelID.value());
+            aiplay::runtime::setLiveObservationEnabled(true);
         }
         return ok;
     }
