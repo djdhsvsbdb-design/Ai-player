@@ -1,6 +1,6 @@
 # AI PLAY — Learning Architecture
 
- > Status: experimental implementation. The repository contains a local behavior-cloning prototype and live adapter hooks; Android runtime behavior and performance remain unverified.
+> Status: experimental implementation. The repository contains a local behavior-cloning prototype and live adapter hooks; Android runtime behavior and performance remain unverified.
 
 ## 1. Product goal
 
