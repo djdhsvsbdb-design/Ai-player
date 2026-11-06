@@ -8162,6 +8162,22 @@ class $modify(GJBaseGameLayer) {
         // (or, between frames, the next one), which is the step an injection of the same press
         // is fed at.
         if (!g_injecting && takeover::personDriving()) takeover::noteInput(down, button, isPlayer1);
+        // Capture ordinary player-1 press/release edges as demonstrations. These
+        // samples are kept separate from solver injections and are not yet training
+        // evidence until a policy can pair them with verified outcomes.
+        if (!g_injecting && !g_started && button == 1 && isPlayer1 && m_player1
+            && aiplay::runtime::g_liveObservationEnabled) {
+            auto* livePlay = PlayLayer::get();
+            if (livePlay && static_cast<GJBaseGameLayer*>(livePlay) == this
+                && !livePlay->m_isTestMode && !m_player1->m_isDead) {
+                const auto mechanic = aiplay::classifyMechanic(
+                    m_player1->m_isShip, m_player1->m_isBall, m_player1->m_isBird,
+                    m_player1->m_isDart, m_player1->m_isRobot, m_player1->m_isSpider,
+                    m_player1->m_isSwing);
+                aiplay::runtime::recordHumanAction(
+                    static_cast<std::uint64_t>(g_tick), mechanic, down);
+            }
+        }
         // Remember the raw press for the slope trace. Jump only (button 1) and
         // player 1 only: the second body follows the same input in these levels,
         // and a per-half press would need the dual input split, which no probe
