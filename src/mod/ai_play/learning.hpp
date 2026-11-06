@@ -138,9 +138,12 @@ inline bool applyVerifiedEvidence(GlobalSkillMemory& memory,
     return true;
 }
 
+inline void recordLevelAttempt(LevelExperienceMemory& memory) {
+    ++memory.attempts;
+}
+
 inline void recordLevelObservation(LevelExperienceMemory& memory,
                                    const LevelObservation& observation) {
-    ++memory.attempts;
     if (observation.verified) {
         memory.bestProgress = std::max(
             memory.bestProgress, clamp01(observation.progress));
