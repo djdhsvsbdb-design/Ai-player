@@ -24,6 +24,7 @@ inline std::filesystem::path g_memoryPath;
 // Bounded, in-session state samples from the live game adapter. These are telemetry,
 // not verified learning evidence, and are deliberately not promoted into global skill.
 inline std::vector<LiveObservation> g_liveObservations;
+inline std::vector<HumanActionSample> g_humanActions;
 
 inline void save() {
     if (!g_loaded || g_memoryPath.empty()) return;
@@ -118,6 +119,7 @@ inline void setLiveObservationEnabled(bool enabled) {
 inline void beginLevel(int levelId) {
     g_currentLevelKey = std::to_string(levelId);
     g_liveObservations.clear();
+    g_humanActions.clear();
     auto& level = g_levels[g_currentLevelKey];
     level.levelKey = g_currentLevelKey;
 }
@@ -146,6 +148,15 @@ inline void recordLiveObservation(const LiveObservation& observation) {
     if (g_liveObservations.size() >= kMaxLiveObservations)
         g_liveObservations.erase(g_liveObservations.begin());
     g_liveObservations.push_back(observation);
+}
+
+inline void recordHumanAction(std::uint64_t tick, Mechanic mechanic, bool down) {
+    if (!g_loaded || !g_liveObservationEnabled || g_currentLevelKey.empty() ||
+        !isPlayableMechanic(mechanic)) return;
+    constexpr std::size_t kMaxHumanActions = 8192;
+    if (g_humanActions.size() >= kMaxHumanActions)
+        g_humanActions.erase(g_humanActions.begin());
+    g_humanActions.push_back(HumanActionSample{tick, mechanic, down});
 }
 
 inline void recordHumanAttempt(double progress, bool completed) {
