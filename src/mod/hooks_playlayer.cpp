@@ -1,5 +1,6 @@
 // PlayLayer hook: attempt boundaries, checkpoints, death / completion, cleanup.
 #include "mod/playlayer_helpers.hpp"
+#include "mod/ai_play/runtime.hpp"
 #include "mod/window_guard.hpp"
 #include <Geode/modify/PauseLayer.hpp>
 #include <Geode/modify/EndLevelLayer.hpp>
@@ -241,7 +242,15 @@ class $modify(PlayLayer) {
             g_swapTiming = false;
             return ok;
         }
-        return PlayLayer::init(level, useReplay, dontCreateObjects);
+        const bool ok = PlayLayer::init(level, useReplay, dontCreateObjects);
+        // Human-play progress is the first live training signal. Solver/replay sessions are
+        // excluded: their generated inputs must not be mistaken for learned player skill.
+        if (ok && !g_started && level && !m_isTestMode) {
+            auto memoryFile = Mod::get()->getSaveDir() / "ai_play_memory_v1.dat";
+            aiplay::runtime::load(memoryFile);
+            aiplay::runtime::beginLevel(level->m_levelID.value());
+        }
+        return ok;
     }
 
     // A copy of the level slice, in a run that takes coins, builds its objects under the type of
@@ -1091,6 +1100,8 @@ class $modify(PlayLayer) {
             solver::g_deathBooked = true;
             auto pos = (isP1 || !m_player1) ? player->getPosition()
                                             : m_player1->getPosition();
+            if (!g_started && !m_isTestMode && isP1)
+                aiplay::runtime::recordHumanAttempt(getCurrentPercent() / 100.0, false);
             if (isP2Dual) {
                 static int s_p2logs = 0;
                 if (++s_p2logs <= 5)
@@ -1282,6 +1293,8 @@ class $modify(PlayLayer) {
             NoRecordGuard nr(this);
             PlayLayer::levelComplete();
         }
+        if (!g_started && !m_isTestMode)
+            aiplay::runtime::recordHumanAttempt(1.0, true);
         restoreProgress();
         if (g_started) {
             ++g_finishedAttempts;
