@@ -174,7 +174,7 @@ inline void persistDemonstrations(double progress, bool completed) {
     const bool needsHeader = reset || size == 0;
     std::ofstream out(path, std::ios::out | (needsHeader ? std::ios::trunc : std::ios::app));
     if (!out) return;
-    if (needsHeader) out << "AIPLAY_DEMOS 1\\n";
+    if (needsHeader) out << "AIPLAY_DEMOS 1\n";
     out << std::setprecision(9);
     for (const auto& a : g_humanActions) {
         out << "A " << g_currentLevelKey << ' ' << (completed ? 1 : 0) << ' '
@@ -184,7 +184,7 @@ inline void persistDemonstrations(double progress, bool completed) {
             << a.vehicleSize << ' ' << a.nearestHazardGap << ' '
             << a.nearestHazardVerticalOffset << ' ' << a.nearestHazardType << ' '
             << a.nearbyHazardCount << ' ' << (a.upsideDown ? 1 : 0) << ' '
-            << (a.buttonHeldBefore ? 1 : 0) << ' ' << (a.down ? 1 : 0) << '\\n';
+            << (a.buttonHeldBefore ? 1 : 0) << ' ' << (a.down ? 1 : 0) << '\n';
     }
     out.flush();
 }
@@ -204,6 +204,8 @@ inline void recordHumanAttempt(double progress, bool completed) {
     observation.verified = true;
     recordLevelObservation(level, observation);
     persistDemonstrations(progress, completed);
+    g_humanActions.clear();
+    g_liveObservations.clear();
     save();
 }
 
