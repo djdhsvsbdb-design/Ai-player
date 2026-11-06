@@ -20,12 +20,15 @@ int main() {
     cube.tick = 1;
     cube.mechanic = Mechanic::Cube;
     cube.synchronized = true;
+    assert(runtime::shouldSampleLiveObservation(cube.tick, cube.mechanic));
     runtime::recordLiveObservation(cube);
     // Same-mode samples are rate-limited, but a mode transition is captured at once.
     cube.tick = 2;
+    assert(!runtime::shouldSampleLiveObservation(cube.tick, cube.mechanic));
     runtime::recordLiveObservation(cube);
     cube.tick = 3;
     cube.mechanic = Mechanic::Wave;
+    assert(runtime::shouldSampleLiveObservation(cube.tick, cube.mechanic));
     runtime::recordLiveObservation(cube);
     assert(runtime::g_liveObservations.size() == 2);
     auto rejected = cube;
