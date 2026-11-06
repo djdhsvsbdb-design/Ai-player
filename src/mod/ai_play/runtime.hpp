@@ -122,6 +122,14 @@ inline void beginLevel(int levelId) {
     level.levelKey = g_currentLevelKey;
 }
 
+inline bool shouldSampleLiveObservation(std::uint64_t tick, Mechanic mechanic) {
+    if (!g_loaded || !g_liveObservationEnabled || g_currentLevelKey.empty() ||
+        !isPlayableMechanic(mechanic)) return false;
+    if (g_liveObservations.empty()) return true;
+    const auto& last = g_liveObservations.back();
+    return last.mechanic != mechanic || tick < last.tick || tick - last.tick >= 24;
+}
+
 inline void recordLiveObservation(const LiveObservation& observation) {
     if (!g_loaded || !g_liveObservationEnabled || g_currentLevelKey.empty() || !observation.synchronized ||
         observation.dead || !isPlayableMechanic(observation.mechanic)) return;
