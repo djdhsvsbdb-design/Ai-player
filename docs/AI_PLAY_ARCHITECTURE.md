@@ -16,6 +16,24 @@ The agent must:
 
 A completed route from a solver is not, by itself, evidence that the agent learned to play. Solver output may be used as a bounded planning aid or diagnostic oracle during development, but it must not replace the agent's learning policy.
 
+## 1.1 Starting skill preset: First Insane Demon
+
+The initial profile is calibrated as a capable but inconsistent player whose hardest
+completed level is approximately their first Insane Demon. It is intentionally below
+expert/pro-level performance. The platform-independent model seeds modest priors for
+Cube, Ship, Ball, UFO, Wave, Robot, Spider, and Swing, with weaker adaptation to unfamiliar
+patterns than control of familiar mechanics.
+
+These preset values are starting estimates only: they have zero verified samples and zero
+confidence until live gameplay confirms them. They must not be displayed as proven mastery.
+The agent can therefore begin with useful prior knowledge while still making mistakes,
+adapting to new layouts, and improving through verified play across levels.
+
+This is not a guarantee of completing every Insane Demon. Difficulty varies substantially
+by level, and actual performance depends on the live observation/input adapter, physics
+calibration, and on-device testing. The preset does not bypass gameplay or use teleportation,
+noclip, or solver output as proof of player skill.
+
 ## 2. System boundaries
 
 AI PLAY is split into five cooperating parts:
@@ -159,4 +177,4 @@ AI PLAY's first meaningful learning release is acceptable only when:
 
 ## 11. Current implementation status
 
-This file is an architectural baseline only. The existing repository is a solver-first codebase. The Player Policy, memory stores, learning updates, AI PLAY button, sound profiles, and Android validation still need implementation.
+This file is an architectural baseline only. The existing repository is a solver-first codebase. The starting-skill prior and platform-independent learning records are implemented as a standalone model. The Player Policy, persistent memory stores, live learning updates, AI PLAY button, sound profiles, and Android validation still need implementation.
