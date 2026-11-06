@@ -65,6 +65,8 @@ int main() {
     runtime::recordHumanAction(demo);
     runtime::recordHumanAttempt(0.42, false);
     runtime::recordHumanAttempt(1.0, true);
+    runtime::g_aiScore.points = 17;
+    runtime::save();
     const auto& before = runtime::g_levels.at("12345");
     assert(before.attempts == 2);
     assert(before.bestProgress == 1.0);
@@ -79,6 +81,7 @@ int main() {
     assert(runtime::g_globalSkill.mechanics.at(Mechanic::Wave).overall.verifiedSamples == 0);
 
     // Simulate a fresh process and verify the profile and per-level experience survive.
+    runtime::g_aiScore = score::ScoreBoard{};
     runtime::g_globalSkill = GlobalSkillMemory{};
     runtime::g_levels.clear();
     runtime::g_liveObservations.clear();
@@ -89,6 +92,7 @@ int main() {
     runtime::g_loaded = false;
     runtime::load(path);
     assert(runtime::g_globalSkill.mechanics.size() == 8);
+    assert(runtime::g_aiScore.points == 17);
     assert(runtime::g_globalSkill.mechanics.at(Mechanic::Wave).overall.value == 0.60);
     assert(runtime::g_levels.at("12345").attempts == 2);
     assert(runtime::g_levels.at("12345").bestProgress == 1.0);
