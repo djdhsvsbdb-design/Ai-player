@@ -21,6 +21,7 @@ int main() {
     assert(before.attempts == 2);
     assert(before.bestProgress == 1.0);
     assert(before.observations.size() == 2);
+    assert(runtime::g_globalSkill.mechanics.at(Mechanic::Wave).overall.verifiedSamples == 0);
 
     // Simulate a fresh process and verify the profile and per-level experience survive.
     runtime::g_globalSkill = GlobalSkillMemory{};
