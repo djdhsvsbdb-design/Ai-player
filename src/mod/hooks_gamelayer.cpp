@@ -6913,6 +6913,8 @@ class $modify(GJBaseGameLayer) {
                 aiplay::runtime::g_aiWasDriving =
                     aiplay::controller::readyFor(aiplay::runtime::g_brainModel, current.mechanic)
                     && safe;
+                if (aiplay::runtime::g_aiWasDriving)
+                    aiplay::runtime::observeAIProgress(livePlay->getCurrentPercent());
                 if (command.valid) {
                     g_injecting = true;
                     this->handleButton(command.down, 1 /*jump*/, true /*player 1*/);
