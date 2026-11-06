@@ -4,6 +4,7 @@
 // This header deliberately does not depend on Geode or Windows/Android hooks.
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <string>
@@ -15,6 +16,19 @@ namespace aiplay {
 enum class Mechanic : std::uint8_t {
     Cube, Ship, Ball, Ufo, Wave, Robot, Spider, Swing, Unknown
 };
+
+// One canonical roster: every standard Geometry Dash movement mode participates in
+// the same learning pipeline. Unknown is intentionally not a trainable mechanic.
+inline constexpr std::array<Mechanic, 8> kPlayableMechanics = {
+    Mechanic::Cube, Mechanic::Ship, Mechanic::Ball, Mechanic::Ufo,
+    Mechanic::Wave, Mechanic::Robot, Mechanic::Spider, Mechanic::Swing
+};
+
+inline constexpr bool isPlayableMechanic(Mechanic mechanic) {
+    for (const auto candidate : kPlayableMechanics)
+        if (candidate == mechanic) return true;
+    return false;
+}
 
 enum class SkillDimension : std::uint8_t {
     Timing, Control, PatternRecognition, Adaptation, Consistency, Count
